@@ -237,5 +237,20 @@
 
 	if _ACTION == "clean" then
 		os.rmdir("bin")
+		os.rmdir("obj")
 		os.rmdir("build")
+		os.rmdir("binmodules/luasocket/obj")
+		os.rmdir("binmodules/example/obj")
+		os.rmdir("contrib/curl/obj")
+		os.rmdir("contrib/curl/bin")
+		os.rmdir("contrib/libzip/obj")
+		os.rmdir("contrib/libzip/bin")
+		os.rmdir("contrib/lua/obj")
+		os.rmdir("contrib/lua/bin")
+		os.rmdir("contrib/luashim/obj")
+		os.rmdir("contrib/luashim/bin")
+		os.rmdir("contrib/mbedtls/obj")
+		os.rmdir("contrib/mbedtls/bin")
+		os.rmdir("contrib/zlib/obj")
+		os.rmdir("contrib/zlib/bin")
 	end

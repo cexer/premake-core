@@ -37,6 +37,7 @@ SRC		= src/host/*.c			\
 		$(LUA_DIR)/lutf8lib.c	\
 		$(LUA_DIR)/lvm.c		\
 		$(LUA_DIR)/lzio.c		\
+		$(LUA_DIR)/lfs.c		\
 
 HOST_PLATFORM= none
 default: $(HOST_PLATFORM)

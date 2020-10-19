@@ -269,6 +269,19 @@
 		return types[iif(node.cfg.kind == "SharedLib" and node.cfg.sharedlibtype, node.cfg.sharedlibtype, node.cfg.kind)]
 	end
 
+  -- cexer
+	function xcode.getmachotype(cfg)
+		local types = {
+			ConsoleApp   = "mh_executable",
+			WindowedApp  = "mh_executable",
+			StaticLib    = "staticlib",
+			SharedLib    = "mh_dylib",
+			OSXBundle    = "mh_bundle",
+			OSXFramework = "mh_bundle",
+			XCTest       = "mh_bundle",
+		}
+		return types[iif(cfg.kind == "SharedLib" and cfg.sharedlibtype, cfg.sharedlibtype, cfg.kind)]
+	end
 
 --
 -- Return the Xcode target type, based on the target file extension.
@@ -558,24 +571,28 @@
 		_p(3,'buildActionMask = 2147483647;')
 		_p(3,'files = (')
 
+    -- cexer
+    -- TODO: allow real framework
 		-- write out library dependencies
-		tree.traverse(tr.frameworks, {
-			onleaf = function(node)
-				if node.buildid then
-					_p(4,'%s /* %s in Frameworks */,', node.buildid, node.name)
-				end
-			end
-		})
+    if nil then
+      tree.traverse(tr.frameworks, {
+        onleaf = function(node)
+          if node.buildid then
+            _p(4,'%s /* %s in Frameworks */,', node.buildid, node.name)
+          end
+        end
+      })
 
-		-- write out project dependencies
-		tree.traverse(tr.projects, {
-			onleaf = function(node)
-				if node.buildid then
-					_p(4,'%s /* %s in Frameworks */,', node.buildid, node.name)
-				end
-			end
-		})
-
+      -- write out project dependencies
+      tree.traverse(tr.projects, {
+        onleaf = function(node)
+          if node.buildid then
+            _p(4,'%s /* %s in Frameworks */,', node.buildid, node.name)
+          end
+        end
+      })
+    end
+  
 		_p(3,');')
 		_p(3,'runOnlyForDeploymentPostprocessing = 0;')
 		_p(2,'};')
@@ -1127,27 +1144,43 @@
 			settings['DEBUG_INFORMATION_FORMAT'] = xcode.getdebugformat(cfg)
 		end
 
-		if cfg.kind ~= "StaticLib" and cfg.buildtarget.prefix ~= '' then
-			settings['EXECUTABLE_PREFIX'] = cfg.buildtarget.prefix
-		end
 
-		if cfg.buildtarget.extension then
-			local exts = {
-				WindowedApp  = "app",
-				SharedLib    = "dylib",
-				StaticLib    = "a",
-				OSXBundle    = "bundle",
-				OSXFramework = "framework",
-				XCTest       = "xctest",
-			}
-			local ext = cfg.buildtarget.extension:sub(2)
-			if ext ~= exts[iif(cfg.kind == "SharedLib" and cfg.sharedlibtype, cfg.sharedlibtype, cfg.kind)] then
-				if cfg.kind == "WindowedApp" or (cfg.kind == "SharedLib" and cfg.sharedlibtype) then
-					settings['WRAPPER_EXTENSION'] = ext
-				elseif cfg.kind == "SharedLib" or cfg.kind == "StaticLib" then
-					settings['EXECUTABLE_EXTENSION'] = ext
-				end
-			end
+    if cfg.kind ~= "StaticLib" and cfg.buildtarget.prefix ~= '' then
+      settings['EXECUTABLE_PREFIX'] = cfg.buildtarget.prefix
+    else -- cexer
+      local prefixs = {
+        ConsoleApp   = "",
+        WindowedApp  = "",
+        SharedLib    = "lib",
+        StaticLib    = "lib",
+        OSXBundle    = "",
+        OSXFramework = "",
+        XCTest       = "",
+      }
+      local prefix = prefixs[iif(cfg.kind == "SharedLib" and cfg.sharedlibtype, cfg.sharedlibtype, cfg.kind)]
+      settings['EXECUTABLE_PREFIX'] = prefix
+    end
+
+    -- cexer
+    local ext = cfg.buildtarget.extension
+		if not cfg.buildtarget.extension then
+      local exts = {
+        ConsoleApp   = "",
+        WindowedApp  = "app",
+        SharedLib    = "dylib",
+        StaticLib    = "a",
+        OSXBundle    = "bundle",
+        OSXFramework = "framework",
+        XCTest       = "xctest",
+      }
+			ext = exts[iif(cfg.kind == "SharedLib" and cfg.sharedlibtype, cfg.sharedlibtype, cfg.kind)]
+    else
+			ext = cfg.buildtarget.extension:sub(2)
+    end
+		if cfg.kind == "WindowedApp" or (cfg.kind == "SharedLib" and cfg.sharedlibtype) then
+			settings['WRAPPER_EXTENSION'] = ext
+		elseif cfg.kind == "SharedLib" or cfg.kind == "StaticLib" then
+			settings['EXECUTABLE_EXTENSION'] = ext
 		end
 
 		local outdir = path.getrelative(tr.project.location, path.getdirectory(cfg.buildtarget.relpath))
@@ -1198,6 +1231,9 @@
 		end
 		settings['PRODUCT_NAME'] = iif(cfg.kind == "ConsoleApp" and cfg.buildtarget.extension, cfg.buildtarget.basename .. cfg.buildtarget.extension, cfg.buildtarget.basename)
 
+    --cexer
+    settings['MACH_O_TYPE'] = xcode.getmachotype(cfg);
+    
 		if os.istarget(p.IOS) then
 			settings['SDKROOT'] = 'iphoneos'
 

@@ -617,27 +617,27 @@
 		_p(3,'buildActionMask = 2147483647;')
 		_p(3,'files = (')
 
-    -- cexer
-    -- TODO: allow real framework
 		-- write out library dependencies
-    if nil then
-      tree.traverse(tr.frameworks, {
-        onleaf = function(node)
-          if node.buildid then
-            _p(4,'%s /* %s in Frameworks */,', node.buildid, node.name)
-          end
-        end
-      })
+		tree.traverse(tr.frameworks, {
+			onleaf = function(node)
+				if node.buildid then
+					_p(4,'%s /* %s in Frameworks */,', node.buildid, node.name)
+				end
+			end
+		})
 
-      -- write out project dependencies
-      tree.traverse(tr.projects, {
-        onleaf = function(node)
-          if node.buildid then
-            _p(4,'%s /* %s in Frameworks */,', node.buildid, node.name)
-          end
-        end
-      })
-    end
+		-- cexer
+		-- this makes project links with dylib, which cause link failure
+		if nil then
+		  -- write out project dependencies
+		  tree.traverse(tr.projects, {
+			onleaf = function(node)
+			  if node.buildid then
+				_p(4,'%s /* %s in Frameworks */,', node.buildid, node.name)
+			  end
+			end
+		  })
+		end
   
 		_p(3,');')
 		_p(3,'runOnlyForDeploymentPostprocessing = 0;')

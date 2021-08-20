@@ -123,6 +123,11 @@
 	function m.localDebuggerWorkingDirectory(cfg)
 		if cfg.debugdir then
 			local dir = p.vstudio.path(cfg, cfg.debugdir)
+			-- cexer
+			-- Quick fix ..\$(TargetDir) issue\
+			if dir == "..\\$(TargetDir)" then
+				dir = "$(TargetDir)"
+			end
 			p.x('<LocalDebuggerWorkingDirectory>%s</LocalDebuggerWorkingDirectory>', dir)
 		end
 	end
